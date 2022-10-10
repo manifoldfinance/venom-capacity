@@ -1,0 +1,54 @@
+version: "3.6"
+
+volumes:
+  prometheus_data:
+services:
+  prometheus:
+    image: prom/prometheus:v2.35.0
+    container_name: prom
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.agent.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      - "--enable-feature=agent"
+    ports:
+      - 9090:9090
+
+    grafana:
+      image: grafana/grafana:9.1.7
+      volumes:
+        - ./grafana/provisioning:/etc/grafana/provisioning
+        - ./grafana/dashboards:/var/lib/grafana/dashboards
+      ports:
+        - 3000:3000
+
+    origin:
+      build:
+        dockerfile: ./Dockerfile
+        context: ./..
+      command: /bin/origin -worker=${ORIGIN_WORKER} -worktime=${ORIGIN_WORKTIME} -queue=${ORIGIN_QUEUE}
+      container_name: origin
+
+    client:
+      depends_on:
+        - origin
+        - proxy
+      image: manifoldfinance/capacity
+      command: /bin/client -worker=${CLIENT_WORKER} -rps=${CLIENT_RPS} -origin=${CLIENT_ORIGIN}
+      container_name: client
+
+    proxy:
+      depends_on:
+        - origin
+      image: manifoldfinance/capacity
+      command: /bin/proxy -quota=${PROXY_QUOTA} -adaptive=${PROXY_ADAPTIVE} -origin=http://origin:8000
+      environment:
+        - GOMAXPROCS=4
+      ports:
+        - 7000:7000
+      container_name: proxy
