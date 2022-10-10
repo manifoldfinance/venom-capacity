@@ -1,3 +1,7 @@
+// Origin Client 
+// addr:8000
+// Workers: 7
+// Worktime: 
 package main
 
 import (
@@ -33,10 +37,12 @@ func main() {
 	requestLatency := prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "origin_request_duration_seconds",
 		Help:    "Total duration of HTTP requests in seconds.",
+    // Buckets are how we group pending requests for block builders to draw from
 		Buckets: []float64{0.95, 1, 1.05, 1.1, 1.5, 1.95, 2, 2.05, 2.1, 2.5, 3, 4},
 	})
 	prometheus.MustRegister(requestLatency)
 	prometheus.MustRegister(requestTotal)
+  // Register addr:8000/metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())
 
 	// Initialize the default source of uniformly-distributed pseudo-random ints.
@@ -49,7 +55,7 @@ func main() {
 		defer func(begun time.Time) {
 			took := time.Since(begun)
 			requestLatency.Observe(took.Seconds())
-			fmt.Printf("request took %v\n", took)
+			fmt.Printf("Request took %v\n", took)
 
 			requestTotal.With(prometheus.Labels{
 				"status": fmt.Sprint(status),
@@ -64,17 +70,17 @@ func main() {
 			<-j.result
 			status = http.StatusOK
 			rw.WriteHeader(status)
-			fmt.Fprint(rw, "🐈\n")
+			fmt.Fprint(rw, "🟩\n")
 		// Discard requests if workers are busy and queue is full.
 		default:
 			status = http.StatusTooManyRequests
 			rw.WriteHeader(status)
-			fmt.Fprint(rw, "🚦\n")
+			fmt.Fprint(rw, "🟥\n")
 		}
 	})
 	go http.ListenAndServe(*addr, nil)
 
-	fmt.Printf("starting %d workers\n", *workerNum)
+	fmt.Printf("🟧 Starting %d workers\n", *workerNum)
 	var wg sync.WaitGroup
 	for i := 0; i < *workerNum; i++ {
 		wg.Add(1)
@@ -83,7 +89,7 @@ func main() {
 				begun := time.Now()
 				time.Sleep(randDuration(*worktime))
 				j.result <- struct{}{}
-				fmt.Printf("worker #%d completed job in %v, %d left\n", workerID, time.Since(begun), len(jobs))
+				fmt.Printf("🟦 Worker #%d completed job in %v, %d left\n", workerID, time.Since(begun), len(jobs))
 			}
 			wg.Done()
 		}(i)
