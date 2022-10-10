@@ -4,7 +4,6 @@
 * @param {ParamDataTypeHere} parameterNameHere - Brief description of the parameter here. Note: For other notations of data types, please refer to JSDocs: DataTypes command.
 * @return {SetMutexProfileFraction} Brief description of the returning value here.
  */
-// Program proxy is a naive http proxy implementation that limits in-flight requests to origin server.
 package main
 
 import (
@@ -52,7 +51,7 @@ func main() {
 
 	target, err := url.Parse(*originAddr)
 	if err != nil {
-		log.Fatalf("proxy: failed to parse origin url: %v", err)
+		log.Fatalf("💥 Proxy: failed to parse origin url: %v", err)
 	}
 	proxy := httputil.NewSingleHostReverseProxy(target)
 	proxy.ModifyResponse = func(resp *http.Response) error {
@@ -64,22 +63,22 @@ func main() {
 			inflight.Backoff(0.75)
 			return nil
 		}
+    
 		/**
 		* @constant {incLimiter}
 		* @summary Increase target concurrency by a constant c per unit time,
 		* @example allow 1 more rps every second if there is a demand.
 		 */
-		// Increase target concurrency by a constant c per unit time,
-		// e.g., allow 1 more rps every second if there is a demand.
 		if incLimiter.Allow() {
 			inflight.Inc()
 		}
 		return nil
 	}
 	proxy.ErrorHandler = func(rw http.ResponseWriter, r *http.Request, err error) {
-		log.Printf("proxy: %v", err)
+		log.Printf("💥 Proxy: %v", err)
 		rw.WriteHeader(http.StatusBadGateway)
 		if *adaptive {
+      // @const inflight.Backoff 0.75
 			inflight.Backoff(0.75)
 		}
 	}
@@ -92,7 +91,7 @@ func main() {
 		}
 
 		rw.WriteHeader(http.StatusTooManyRequests)
-		fmt.Fprint(rw, "🚦\n")
+		fmt.Fprint(rw, "▶\n")
 	})
 	http.ListenAndServe(*addr, nil)
 }
@@ -103,7 +102,6 @@ func main() {
 * @summary Quota is a limited quantity of requests allowed to be in-flight.
  */
 
-// Quota is a limited quantity of requests allowed to be in-flight.
 type Quota struct {
 	used int64
 	max  int64
@@ -127,7 +125,7 @@ func (q *Quota) Receive() bool {
 	used := atomic.LoadInt64(&q.used)
 	max := atomic.LoadInt64(&q.max)
 	available := used < max
-	// If quota became available here, it's still ok to reject the request.
+	// If quota became available here, it's still OK to reject the request.
 	if !available {
 		return false
 	}
@@ -135,7 +133,7 @@ func (q *Quota) Receive() bool {
 	atomic.AddInt64(&q.used, 1)
 	q.current.Inc()
 
-	// If quota became unavailable here, it's still ok to process the request.
+	// If quota became unavailable here, it's still OK to process the request.
 	return true
 }
 

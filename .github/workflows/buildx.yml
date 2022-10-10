@@ -1,0 +1,39 @@
+
+name: buildx
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+    tags:
+      - 'v*'
+  workflow_dispatch: {}
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            sambacha/github-docker-action
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      -
+        name: Build
+        uses: docker/bake-action@v2
+        with:
+          files: |
+            ./docker-bake.hcl
+            ${{ steps.meta.outputs.bake-file }}
+          targets: build
