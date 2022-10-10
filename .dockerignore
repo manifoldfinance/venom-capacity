@@ -1,3 +1,13 @@
 #.dockerignore
 .git
 .github
+Makefile
+Dockerfile
+docker-compose.yml
+vendor/
+start.sh
+test.Dockerfile
+nuke.sh
+README.md
+docs/
+
