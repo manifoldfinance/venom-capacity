@@ -1,0 +1,99 @@
+name: venom-capacity
+services:
+  client:
+    command:
+    - /bin/client
+    - -worker=10
+    - -rps=5
+    - -origin=http://origin:8000
+    container_name: client
+    depends_on:
+      origin:
+        condition: service_started
+      proxy:
+        condition: service_started
+    environment:
+      CLIENT_ORIGIN: http://origin:8000
+      CLIENT_RPS: "5"
+      CLIENT_WORKER: "10"
+      IS_TEST: dev
+    image: manifoldfinance/capacity
+    networks:
+      default: null
+  grafana:
+    image: grafana/grafana:9.1.7
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 3000
+      published: "3000"
+      protocol: tcp
+    volumes:
+    - type: bind
+      source: /root/venom-capacity/grafana/provisioning
+      target: /etc/grafana/provisioning
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /root/venom-capacity/grafana/dashboards
+      target: /var/lib/grafana/dashboards
+      bind:
+        create_host_path: true
+  origin:
+    command:
+    - /bin/origin
+    - -worker=7
+    - -worktime=1s
+    - -queue=100
+    container_name: origin
+    environment:
+      COLLECT_PEER_INFO: "true"
+      COLLECT_PENDING_TX: "true"
+      ETH_RPC_URL: http://172.25.0.104:8545
+      ORIGIN_QUEUE: "100"
+      ORIGIN_WORKER: "7"
+      ORIGIN_WORKTIME: 1s
+    image: manifoldfinance/capacity
+    networks:
+      default: null
+  prometheus:
+    image: prom/prometheus:v2.29.2
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 9090
+      published: "9090"
+      protocol: tcp
+    volumes:
+    - type: bind
+      source: /root/venom-capacity/prometheus.yml
+      target: /etc/prometheus/prometheus.yml
+      bind:
+        create_host_path: true
+  proxy:
+    command:
+    - /bin/proxy
+    - -quota=5
+    - -adaptive=false
+    - -origin=http://origin:8000
+    container_name: origin
+    depends_on:
+      origin:
+        condition: service_started
+    environment:
+      GOMAXPROCS: "4"
+      PROXY_ADAPTIVE: "false"
+      PROXY_QUOTA: "5"
+    image: manifoldfinance/capacity
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 7000
+      published: "7000"
+      protocol: tcp
+networks:
+  default:
+    name: venom-capacity_default

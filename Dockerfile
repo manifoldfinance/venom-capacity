@@ -1,8 +1,6 @@
-FROM golang:1.19-alpine AS build
+FROM golang:1.18-alpine AS build
 LABEL stage=intermediate
-
-RUN apk upgrade
-RUN apk add --no-cache git bind-tools
+RUN apk add --no-cache git
 WORKDIR /opt/demo/
 COPY . .
 RUN CGO_ENABLED=0 go install \
@@ -11,12 +9,10 @@ RUN CGO_ENABLED=0 go install \
 
 FROM scratch
 USER nobody
-EXPOSE 8000 8080 7000
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /go/bin/origin /bin/origin
 COPY --from=build /go/bin/client /bin/client
 COPY --from=build /go/bin/proxy /bin/proxy
-
 
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="Capacity" \

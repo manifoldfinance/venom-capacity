@@ -1,7 +1,8 @@
-version: "3.9"
+version: "3.5"
+
 services:
   prometheus:
-    image: prom/prometheus:v2.35.0
+    image: prom/prometheus:v2.29.2
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
@@ -16,27 +17,39 @@ services:
       - 3000:3000
 
   origin:
-    build:
-      dockerfile: ./Dockerfile
-      context: ./..
-    command: /bin/origin -worker=${ORIGIN_WORKER} -worktime=${ORIGIN_WORKTIME} -queue=${ORIGIN_QUEUE}
-    container_name: origin
+      container_name: origin
+      image: manifoldfinance/capacity
+      command: /bin/origin -worker=${ORIGIN_WORKER} -worktime=${ORIGIN_WORKTIME} -queue=${ORIGIN_QUEUE}
+      environment:
+          - COLLECT_PEER_INFO=true
+          - COLLECT_PENDING_TX=true
+          - ETH_RPC_URL=http://172.25.0.104:8545
+          - ORIGIN_WORKER=7
+          - ORIGIN_WORKTIME=1s
+          - ORIGIN_QUEUE=100
 
   client:
-    depends_on:
-      - origin
-      - proxy
-    image: manifoldfinance/capacity
-    command: /bin/client -worker=${CLIENT_WORKER} -rps=${CLIENT_RPS} -origin=${CLIENT_ORIGIN}
-    container_name: client
+      container_name: client
+      image: manifoldfinance/capacity
+      depends_on:
+        - origin
+        - proxy
+      command: /bin/client -worker=${CLIENT_WORKER} -rps=${CLIENT_RPS} -origin=${CLIENT_ORIGIN}
+      environment:
+          - CLIENT_WORKER=10
+          - CLIENT_ORIGIN=http://origin:8000
+          - CLIENT_RPS=5
+          - IS_TEST=dev
 
   proxy:
-    depends_on:
-      - origin
-    image: manifoldfinance/capacity
-    command: /bin/proxy -quota=${PROXY_QUOTA} -adaptive=${PROXY_ADAPTIVE} -origin=http://origin:8000
-    environment:
-      - GOMAXPROCS=4
-    ports:
-      - 7000:7000
-    container_name: proxy
+      container_name: proxy
+      image: manifoldfinance/capacity
+      depends_on:
+        - origin
+      command: /bin/proxy -quota=${PROXY_QUOTA} -adaptive=${PROXY_ADAPTIVE} -origin=http://origin:8000
+      environment:
+        - GOMAXPROCS=4
+        - PROXY_QUOTA=5
+        - PROXY_ADAPTIVE=false
+      ports:
+        - 7000:7000
