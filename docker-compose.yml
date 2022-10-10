@@ -1,7 +1,4 @@
-version: "3.6"
-
-volumes:
-  prometheus_data:
+version: "3.9"
 services:
   prometheus:
     image: prom/prometheus:v2.35.0
@@ -9,37 +6,39 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - 9090:9090
-      
-    grafana:
-      image: grafana/grafana:9.1.7
-      volumes:
-        - ./grafana/provisioning:/etc/grafana/provisioning
-        - ./grafana/dashboards:/var/lib/grafana/dashboards
-      ports:
-        - 3000:3000
 
-    origin:
-      build:
-        dockerfile: ./Dockerfile
-        context: ./..
-      command: /bin/origin -worker=${ORIGIN_WORKER} -worktime=${ORIGIN_WORKTIME} -queue=${ORIGIN_QUEUE}
-      container_name: origin
+  grafana:
+    image: grafana/grafana:9.1.7
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - 3000:3000
 
-    client:
-      depends_on:
-        - origin
-        - proxy
-      image: manifoldfinance/capacity
-      command: /bin/client -worker=${CLIENT_WORKER} -rps=${CLIENT_RPS} -origin=${CLIENT_ORIGIN}
-      container_name: client
+  origin:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    #image: sambacha/capacity
+    command: /bin/origin -worker=${ORIGIN_WORKER} -worktime=${ORIGIN_WORKTIME} -queue=${ORIGIN_QUEUE}
 
-    proxy:
-      depends_on:
-        - origin
-      image: manifoldfinance/capacity
-      command: /bin/proxy -quota=${PROXY_QUOTA} -adaptive=${PROXY_ADAPTIVE} -origin=http://origin:8000
-      environment:
-        - GOMAXPROCS=4
-      ports:
-        - 7000:7000
-      container_name: proxy
+  client:
+    depends_on:
+      - origin
+      - proxy
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    command: /bin/client -worker=${CLIENT_WORKER} -rps=${CLIENT_RPS} -origin=${CLIENT_ORIGIN}
+
+  proxy:
+    depends_on:
+      - origin
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    command: /bin/proxy -quota=${PROXY_QUOTA} -adaptive=${PROXY_ADAPTIVE} -origin=http://origin:8000
+    environment:
+      - GOMAXPROCS=4
+    ports:
+      - 7000:7000
