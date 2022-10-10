@@ -3,13 +3,20 @@ LABEL stage=intermediate
 
 RUN apk upgrade
 RUN apk add --no-cache git bind-tools
-
 WORKDIR /opt/demo/
 COPY . .
-
-RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOOS=linux go install \
-    --ldflags "-s -X main.version=${VERSION}" -a -installsuffix cgo \
+RUN CGO_ENABLED=0 go install \
+    --ldflags "-s" -a -installsuffix cgo \
     ./cmd/...
+
+FROM scratch
+USER nobody
+EXPOSE 8000 8080 7000
+COPY --from=build /etc/passwd /etc/passwd
+COPY --from=build /go/bin/origin /bin/origin
+COPY --from=build /go/bin/client /bin/client
+COPY --from=build /go/bin/proxy /bin/proxy
+
 
 LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.name="Capacity" \
@@ -20,21 +27,3 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vendor="CommodityStream, Inc." \
       org.label-schema.version=$VERSION \
       org.label-schema.schema-version="1.0"
-
-FROM scratch AS origin
-USER nobody
-COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /go/bin/origin /bin/origin
-EXPOSE 8000
-
-FROM scratch AS proxy
-USER nobody
-COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /go/bin/proxy /bin/proxy
-EXPOSE 8080
-
-FROM scratch AS client
-USER nobody
-COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /go/bin/client /bin/client
-EXPOSE 7000
