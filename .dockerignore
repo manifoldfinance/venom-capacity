@@ -1,6 +1,8 @@
 #.dockerignore
-.git
-.github
+init.sh
+docker-bake.hcl
+.git/
+.github/
 Makefile
 Dockerfile
 docker-compose.yml
