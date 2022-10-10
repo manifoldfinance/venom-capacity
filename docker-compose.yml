@@ -1,21 +1,50 @@
-version: "3.5"
+version: "3.7"
 
+networks:
+  mempool:
+    driver: bridge
+
+volumes:
+    prometheus_data: {}
+    grafana_data: {}
+    
 services:
   prometheus:
     image: prom/prometheus:v2.29.2
+    container_name: prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
     ports:
       - 9090:9090
-
+    networks:
+      - mempool
+    labels:
+      org.label-schema.group: "monitoring"
+      
   grafana:
     image: grafana/grafana:9.1.7
     volumes:
+      - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
     ports:
       - 3000:3000
-
+    container_name: grafana
+    networks:
+      - mempool
+    labels:
+      org.label-schema.group: "monitoring"
+      
   origin:
       container_name: origin
       image: manifoldfinance/capacity
@@ -27,6 +56,8 @@ services:
           - ORIGIN_WORKER=7
           - ORIGIN_WORKTIME=1s
           - ORIGIN_QUEUE=100
+      networks:
+        - mempool
 
   client:
       container_name: client
@@ -40,6 +71,8 @@ services:
           - CLIENT_ORIGIN=http://origin:8000
           - CLIENT_RPS=5
           - IS_TEST=dev
+      networks:
+        - mempool
 
   proxy:
       container_name: proxy
@@ -53,3 +86,5 @@ services:
         - PROXY_ADAPTIVE=false
       ports:
         - 7000:7000
+      networks:
+        - mempool
