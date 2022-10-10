@@ -88,3 +88,21 @@ services:
         - 7000:7000
       networks:
         - mempool
+  caddy:
+      container_name: caddy
+      image: caddy:2.3.0
+      depends_on:
+        - origin
+      command: /bin/proxy -quota=${PROXY_QUOTA} -adaptive=${PROXY_ADAPTIVE} -origin=http://origin:8000
+      volumes:
+        - ./caddy:/etc/caddy
+      ports:
+        - 7000:7000
+        - 3000:3000
+        - 8080:8080
+        - 8000:8000
+        - 9090:9090
+        - 80:80
+      restart: unless-stopped
+      networks:
+        - mempool
