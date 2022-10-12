@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-echo "Nukin Docker Env..."
+echo "☢️ Nukin Docker Env..."
 docker-compose down --remove-orphans -v --rmi all
 #sudo docker rm --force $(docker ps --all -q)
 #sudo docker rmi --force $(docker images --all -q)

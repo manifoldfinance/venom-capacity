@@ -1,4 +1,5 @@
-#!/usr/bin/env bash -eu
+#!/usr/bin/env bash
+set -eu
 
 NO_LOCK_REQUIRED=true
 
@@ -6,7 +7,10 @@ NO_LOCK_REQUIRED=true
 . ./.common.sh
 
 
+NAME='manifoldfinance/capacity'
 PARAMS=""
+DATE=$(date +"%d%m%Y-%H%M%S")
+CONTAINER_ID=$(docker ps -a -f name=$NAME --format "{{.ID}}")
 
 displayUsage()
 {
@@ -42,10 +46,9 @@ sleep 1
 docker-compose ${composeFile} build --pull
 sleep 1
 echo "Starting  simulation...."
-docker-compose ${composeFile} up --detach
+ORIGIN_WORKTIME=2s CLIENT_ORIGIN=http://proxy:7000 PROXY_ADAPTIVE=true docker-compose ${composeFile} up --detach
 
 echo "Service Endpoints....."
 # Print Service Endpoints
 ./list.sh
 sleep 1
-
