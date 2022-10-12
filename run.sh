@@ -31,12 +31,21 @@ echo "${SAMPLE_VERSION}" >> ${LOCK_FILE}
 echo "${bold}*************************************"
 echo "Simulation Mempool Overlay - ${SAMPLE_VERSION}"
 echo "*************************************${normal}"
-echo "Loading... network"
+echo "Loading.... containers"
 echo "--------------------"
 
-echo "Starting network..."
+echo "Building Network Services..."
+
+docker build . -t manifoldfinance/capacity --no-cache
+sleep 1
+
 docker-compose ${composeFile} build --pull
+sleep 1
+echo "Starting  simulation...."
 docker-compose ${composeFile} up --detach
 
+echo "Service Endpoints....."
 # Print Service Endpoints
 ./list.sh
+sleep 1
+
