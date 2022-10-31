@@ -6,24 +6,31 @@ $X(N)=\frac{\lambda N}{1+\sigma(N-1)+\kappa N(N-1)}$
 
 ## Equation 
 
-X(N)=(lambda N)/(1+sigma(N-1)+kappa N(N-1))
+$X(N)=(lambda N)/(1+sigma(N-1)+kappa N(N-1))$
 
 
-    N is a number of nodes
-    X(N) is throughput of the system of N nodes, e.g., 100 requests per second
-    λ is a throughput of the system with one node X(1)
-    σ is a coefficient of contention, e.g., σ=0.05 (5%)
-    κ is a coefficient of crosstalk, e.g., κ=0.02 (2%)
+| **Measure** 	| **Description**                                  	| **Example**             	|
+|-------------	|--------------------------------------------------	|-------------------------	|
+| N           	| is a number of nodes                             	|                         	|
+| X(N)        	| is throughput of the system of N nodes           	| 100 requests per second 	|
+| λ           	| is a throughput of the system with one node X(1) 	|                         	|
+| σ           	| a coefficient of contention                      	| σ=0.05 (5%)             	|
+| κ           	| a coefficient of crosstalk                       	| κ=0.02 (2%)             	|
 
 
 ## Usage 
 
-Start
+Start the entire process by executing our script entrypoint via `run.sh`
+
 ```bash
-docker-compose up
+./run.sh
 ```
 
 ## Monitor 
+
+```bash
+./list.sh
+```
 
 ### Grafana 
 
@@ -53,3 +60,22 @@ origin processes between 2.7 and 3 requests per second <br>
 origin has served requests with average latency 2.2 seconds <br>
 origin has served 50% of requests (50th percentile) within 2 seconds <br>
 origin has served 99% of requests (99th percentile) within 3 seconds with periodic spikes <br>
+
+
+ ## License
+ 
+ Licensed under either of
+
+ * Universal Permissive License 1.0
+   ([LICENSE-UPL](LICENSE-UPL) or https://opensource.org/licenses/UPL)
+
+ * Apache License, Version 2.0
+   ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+ 
+ at your option.
+
+ ### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Universal Permissive License v 1.0 
+license, shall be dual licensed as above, without any additional terms or conditions.
