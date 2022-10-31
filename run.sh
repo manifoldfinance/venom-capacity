@@ -17,8 +17,8 @@ displayUsage()
   echo "Simulated Mempool with networked containers using Docker."
   echo "You can select the simulation mechanism to use.\n"
   echo "Usage: ${me} [OPTIONS]"
-  echo "    -c <ibft2|clique|ethash> : the simulated scenario mechanism that you want to run
-                                       on your network, default is ethash"
+  echo "    -c <c1|c2|c3> : the simulated scenario mechanism that you want to run
+                                       on your network, default is c1"
   echo "    -e                       : setup env."
   echo "    -s                       : simulated scenario algorithm. Note the -s option must be preceeded by the -c option"
   exit 0
